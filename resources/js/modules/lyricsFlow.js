@@ -127,10 +127,15 @@ export function showLyricsFlow(row) {
         measured = false; // the layer had no layout while hidden
         jump = true;
     }
+    if (!rowEls[row]) {
+        hideLyricsFlow();
+        return;
+    }
     if (row === currentRow && !jump) return;
     if (currentRow !== null && Math.abs(row - currentRow) > JUMP_DISTANCE) jump = true;
 
     setCurrent(row);
+    measured = false; // the current line is heavier, so a long line can rewrap and move the rows below it
     moveTo(row, jump);
     currentRow = row;
 }

@@ -21,7 +21,8 @@ LEAD_TEXT = "Intro"
 TRAIL_TEXT = "End"
 EMPTY_LINE_TEXT = "♪"  # same substitution as the six-line window in lyrics.py
 
-# Single-line lyric lists that are placeholders, not songs (also used by lyrics.py and server.py)
+# Single-line lyric lists that are placeholders, not songs. INSTRUMENTAL_TEXTS is also used by lyrics.py and server.py;
+# SEARCHING_TEXT is the lower-cased form of the placeholder lyrics.py shows while it searches
 SEARCHING_TEXT = "searching lyrics..."
 INSTRUMENTAL_TEXTS = {"instrumental", "music only", "no lyrics", "non-lyrical", "♪", "♫", "♬",
                       "(instrumental)", "[instrumental]"}

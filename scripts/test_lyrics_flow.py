@@ -30,7 +30,9 @@ class SheetRows(unittest.TestCase):
         self.assertIsNone(lf.sheet_rows([(0, "Searching lyrics...")]))
 
     def test_no_sheet_for_a_single_line_instrumental_placeholder(self):
-        for text in ("Instrumental", "♪", "[Instrumental]", "Music only"):
+        # The nine placeholders lyrics.py and server.py listed inline before they shared INSTRUMENTAL_TEXTS
+        for text in ("Instrumental", "music only", "No Lyrics", "non-lyrical", "♪", "♫", "♬",
+                     "(Instrumental)", "[instrumental]"):
             with self.subTest(text=text):
                 self.assertIsNone(lf.sheet_rows([(0, text)]))
 
