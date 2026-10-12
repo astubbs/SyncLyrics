@@ -2597,7 +2597,6 @@ body.art-only-mode .main-latency-controls {
     color: rgba(255, 255, 255, 0.5);
 }
 
-
 /* ========== LYRICS FLOW ========== */
 /* Whole song as one sheet that glides to keep the current line at a fixed spot (resources/js/modules/lyricsFlow.js).
    While it shows, the six fixed lines stay in the DOM (karaoke and other code use them) but are hidden. */
@@ -2657,7 +2656,7 @@ body.lyrics-flow-active .lyrics-flow {
     transition: none !important;
 }
 
-/* Reduced motion: the glide is removed in JS; focus changes apply instantly here */
+/* Reduced motion: the sheet's own glide is switched off in lyricsFlow.js; no focus transitions either */
 @media (prefers-reduced-motion: reduce) {
     .lyrics-flow .flow-line {
         transition: none;

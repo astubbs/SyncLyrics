@@ -13,6 +13,7 @@ from providers.qq import QQMusicProvider
 from providers.musixmatch import MusixmatchProvider
 from config import LYRICS, DEBUG, FEATURES, DATABASE_DIR
 from logging_config import get_logger
+import lyrics_flow
 
 logger = get_logger(__name__)
 
@@ -1885,13 +1886,6 @@ async def get_timed_lyrics_window_and_index() -> tuple:
     background tasks replace current_song_lyrics. Returns (window, idx, lines); window is the
     6-tuple or a status string, idx and lines are None with a status string.
     """
-    lines = None
-
-    def safe_get_line(idx):
-        if lines and 0 <= idx < len(lines):
-            return lines[idx][1] or "♪"
-        return ""
-
     await _update_song()
     
     if current_song_data is None: return "No song playing", None, None
@@ -1899,6 +1893,11 @@ async def get_timed_lyrics_window_and_index() -> tuple:
     
     lines = current_song_lyrics  # snapshot: no await between here and the return
     idx = _find_current_lyric_index()
+
+    def safe_get_line(idx):
+        if lines and 0 <= idx < len(lines):
+            return lines[idx][1] or "♪"
+        return ""
 
     # Explicit Flag Check (New)
     is_instrumental = False
@@ -1909,7 +1908,7 @@ async def get_timed_lyrics_window_and_index() -> tuple:
         text = lines[0][1].lower().strip()
         # Check for known "Instrumental" markers from providers
         # Expanded list to catch more symbols and common provider placeholders
-        if text in ["instrumental", "music only", "no lyrics", "non-lyrical", "♪", "♫", "♬", "(instrumental)", "[instrumental]"]:
+        if text in lyrics_flow.INSTRUMENTAL_TEXTS:
             is_instrumental = True
     
     # Note: Instrumental breaks (sections within songs marked with "(Instrumental)", "[Solo]", etc.)

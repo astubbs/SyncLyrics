@@ -259,7 +259,7 @@ async def lyrics() -> dict:
         if not is_instrumental_manual and "instrumental" in msg.lower():
             is_instrumental = True
             
-        return {
+        response = {
             "lyrics": [], 
             "msg": msg,
             "colors": colors, 
@@ -270,8 +270,10 @@ async def lyrics() -> dict:
             "word_synced_lyrics": None,
             "has_word_sync": False,
             "word_sync_provider": None,
-            **({"flow": lyrics_flow.flow_fragment(None, None, None)} if flow_requested else {})
         }
+        if flow_requested:
+            response["flow"] = lyrics_flow.flow_fragment(None, None, None)
+        return response
     
     # Check if lyrics are actually empty or just [...]
     # (lyrics_data is a tuple of strings)
@@ -285,7 +287,7 @@ async def lyrics() -> dict:
         current_lyrics = lyrics_module.current_song_lyrics
         if current_lyrics and len(current_lyrics) == 1:
             text = current_lyrics[0][1].lower().strip() if len(current_lyrics[0]) > 1 else ""
-            if text in ["instrumental", "music only", "no lyrics", "non-lyrical", "♪", "♫", "♬", "(instrumental)", "[instrumental]"]:
+            if text in lyrics_flow.INSTRUMENTAL_TEXTS:
                 is_instrumental = True
                 has_lyrics = False
 
@@ -359,7 +361,7 @@ async def lyrics() -> dict:
             _instrumental_markers_cache['key'] = cache_key
             _instrumental_markers_cache['markers'] = instrumental_markers
 
-    return {
+    response = {
         "lyrics": list(lyrics_data),
         "colors": colors,
         "provider": provider,
@@ -374,10 +376,12 @@ async def lyrics() -> dict:
         "any_provider_has_word_sync": any_provider_has_word_sync,
         # Instrumental markers for gap detection (timestamps where ♪ appears in line-sync)
         "instrumental_markers": instrumental_markers if instrumental_markers else None,
-        # Lyrics Flow: whole-song sheet + current row, only when the page asks (flow=1)
-        **({"flow": lyrics_flow.flow_fragment(flow_lines if has_lyrics else None, flow_index,
-                                              request.args.get("flow_sheet"))} if flow_requested else {})
     }
+    # Lyrics Flow: whole-song sheet + current row, only when the page asks (flow=1)
+    if flow_requested:
+        response["flow"] = lyrics_flow.flow_fragment(flow_lines if has_lyrics else None, flow_index,
+                                                     request.args.get("flow_sheet"))
+    return response
 
 @app.route("/current-track")
 async def current_track() -> dict:
@@ -408,8 +412,7 @@ async def current_track() -> dict:
                     current_lyrics = lyrics_module.current_song_lyrics
                     if current_lyrics and len(current_lyrics) == 1:
                         text = current_lyrics[0][1].lower().strip()
-                        # Updated list to match lyrics.py
-                        if text in ["instrumental", "music only", "no lyrics", "non-lyrical", "♪", "♫", "♬", "(instrumental)", "[instrumental]"]:
+                        if text in lyrics_flow.INSTRUMENTAL_TEXTS:
                             is_instrumental = True
             
             metadata["is_instrumental"] = is_instrumental

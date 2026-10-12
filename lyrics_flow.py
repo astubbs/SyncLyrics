@@ -5,6 +5,7 @@ The page renders every line of the song as one sheet and glides it so the curren
 fixed spot. The server still decides which line is current (lyrics._find_current_lyric_index, with
 its latency offsets and intro/outro handling); this module only shapes that decision for the page:
 
+- has_sheet():     whether the current lyrics make a sheet (not empty, not a placeholder)
 - sheet_rows():    the song's lines plus a leading "Intro" row and a trailing "End" row
 - sheet_id():      a short content hash, so the page re-fetches the sheet only when it changes
                    (the server replaces lyrics mid-song: placeholder -> fetched, provider switches)
@@ -20,20 +21,27 @@ LEAD_TEXT = "Intro"
 TRAIL_TEXT = "End"
 EMPTY_LINE_TEXT = "♪"  # same substitution as the six-line window in lyrics.py
 
-# Single-line lyric lists that are placeholders, not songs - same list as lyrics.py / server.py
+# Single-line lyric lists that are placeholders, not songs (also used by lyrics.py and server.py)
 SEARCHING_TEXT = "searching lyrics..."
 INSTRUMENTAL_TEXTS = {"instrumental", "music only", "no lyrics", "non-lyrical", "♪", "♫", "♬",
                       "(instrumental)", "[instrumental]"}
 
 
-def sheet_rows(lines):
-    """Rows for the page, or None when there is no sheet to show (no lyrics or a placeholder)."""
+def has_sheet(lines):
+    """False when there is no sheet to show: no lyrics, or a placeholder such as "Searching lyrics..."."""
     if not lines:
-        return None
+        return False
     if len(lines) == 1:
         text = (lines[0][1] or "").lower().strip()
         if text == SEARCHING_TEXT or text in INSTRUMENTAL_TEXTS:
-            return None
+            return False
+    return True
+
+
+def sheet_rows(lines):
+    """Rows for the page, or None when there is no sheet to show."""
+    if not has_sheet(lines):
+        return None
     return [LEAD_TEXT] + [(text or EMPTY_LINE_TEXT) for _, text in lines] + [TRAIL_TEXT]
 
 
@@ -54,11 +62,10 @@ def row_for_index(index, line_count):
 
 def flow_fragment(lines, index, known_sheet_id):
     """The `flow` field for /lyrics: sheet id and row always, the rows only when the page lacks them."""
-    rows = sheet_rows(lines)
-    if rows is None:
+    if not has_sheet(lines):
         return {"sheet_id": None, "row": None}
     current_id = sheet_id(lines)
     fragment = {"sheet_id": current_id, "row": row_for_index(index, len(lines))}
     if known_sheet_id != current_id:
-        fragment["sheet"] = rows
+        fragment["sheet"] = sheet_rows(lines)
     return fragment
